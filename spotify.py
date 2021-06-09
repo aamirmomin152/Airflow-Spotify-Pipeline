@@ -49,3 +49,28 @@ def get_spotify_songs():
     except:
         logging.info('Spotify API GET Failure')
 
+def parse_json(text):
+
+    try:
+        spotify_data = json.loads(text)
+
+        data = []
+        for item in spotify_data["items"]:
+            current_row = []
+            current_row.append(item["added_at"])
+            current_row.append(item["track"]["album"].get("name"))
+            current_row.append(item["track"].get("name"))
+            current_row.append(item["track"].get("duration_ms"))
+
+            artist = ''
+            for artist in item["track"]["album"]["artists"]:
+                artist = artist["name"] + ''
+            current_row.append(artist)
+            data.append(current_row)
+
+        df = pd.DataFrame(
+            data, columns=['ADDED_AT', 'ALBUM_NAME', 'SONG_NAME', 'DURATION_MILLISECONDS', 'ARTISTS'])
+
+        write_to_snowflake(df)
+    except:
+        logging.info('Failure parsing through API JSON response')
