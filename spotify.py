@@ -74,3 +74,27 @@ def parse_json(text):
         write_to_snowflake(df)
     except:
         logging.info('Failure parsing through API JSON response')
+
+def write_to_snowflake(df):
+    try:
+        logging.info('Attemping to connect and write to Snowflake')
+        conn = snow.connect(user=config.user,
+                            password=config.password,
+                            account=config.account,
+                            warehouse=config.warehouse,
+                            database=config.database,
+                            schema=config.schema)
+
+        write_pandas(conn, df, "SPOTIFYPLAYLIST")
+
+        cur = conn.cursor()
+
+        # Execute a statement that will turn the warehouse off.
+        sql = "ALTER WAREHOUSE COMPUTE_WH SUSPEND"
+        cur.execute(sql)
+
+        # Close your cursor and your connection.
+        cur.close()
+        conn.close()
+    except:
+        logging.info('Failure connecting to or writing to Snowflake')
