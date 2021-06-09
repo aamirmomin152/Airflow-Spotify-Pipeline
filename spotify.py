@@ -109,3 +109,31 @@ def write_to_snowflake(df):
         conn.close()
     except:
         logging.info('Failure connecting to or writing to Snowflake')
+
+default_args = {
+    'owner': 'me',
+    'start_date': dt.datetime(2017, 6, 1),
+    'retries': 0,
+    'retry_delay': dt.timedelta(minutes=5),
+}
+
+
+with DAG('spotify-pipeline',
+         default_args=default_args,
+         schedule_interval=None,
+         ) as dag:
+    # Get songs and data, parse through it, write to snowflake, then run a snowflake operator to take data to transformaed schema using Airflow DAG
+    sqlstring = 'CREATE OR REPLACE TABLE "DEMO_DB"."PUBLIC"."TRANSFORMEDSPOTIFYPLAYLIST" AS SELECT TO_DATE(ADDED_AT) AS ADDED_DATE, SONG_NAME, CAST(DURATION_MILLISECONDS AS int) / 60000 AS DURATION_MINUTES, ARTISTS FROM "DEMO_DB"."PUBLIC"."SPOTIFYPLAYLIST"'
+    curate_snowflake_data = SnowflakeOperator(
+        task_id='curate_snowflake_data',
+        sql=sqlstring,
+        snowflake_conn_id="snowflake_conn"
+    )
+
+    get_spotify_songs = PythonOperator(task_id='get_spotify_songs',
+                                       python_callable=get_spotify_songs)
+
+    sleep = BashOperator(task_id='sleep',
+                         bash_command='sleep 5')
+
+get_spotify_songs >> sleep >> curate_snowflake_data
