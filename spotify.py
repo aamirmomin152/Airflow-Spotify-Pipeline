@@ -4,6 +4,17 @@ import logging
 import pandas as pd
 import config
 
+# The Snowflake Connector library.
+import snowflake.connector as snow
+from snowflake.connector.pandas_tools import write_pandas
+
+#Airflow dependencies
+from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash_operator import BashOperator
+from airflow.contrib.operators.snowflake_operator import SnowflakeOperator
+from airflow import DAG
+
+
 
 def connect_to_spotify():
     try:
