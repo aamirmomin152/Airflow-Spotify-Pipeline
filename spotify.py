@@ -28,3 +28,24 @@ def connect_to_spotify():
         return access_token
     except:
         logging.info('Failure to get access token...')
+
+def get_spotify_songs():
+
+    try:
+        logging.info('Calling Spotify API Services...')
+        access_token = connect_to_spotify()
+        url = "https://api.spotify.com/v1/playlists/5CCLPEfMG0ejXwbOt0cbQB/tracks?market=US"
+
+        payload = {}
+        headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+
+        response = requests.request("GET", url, headers=headers, data=payload)
+
+        parse_json(response.text)
+    except:
+        logging.info('Spotify API GET Failure')
+
